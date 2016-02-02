@@ -1,0 +1,41 @@
+#FROM anapsix/alpine-java:jre8
+FROM java:8u72-jre
+
+ENV SONATYPE_WORK /opt/sonatype/sonatype-work
+ENV NEXUS_VERSION 3.0.0-m7
+ENV NEXUS_ARCHIVE_DIR nexus-3.0.0-b2016011501
+
+#RUN apk --update add wget ca-certificates tar
+RUN apt-get update && apt-get install wget tar
+
+#RUN adduser -D -u 1000 -h ${SONATYPE_WORK} -s /bin/false nexus
+RUN adduser --disabled-password --uid 1000 --home ${SONATYPE_WORK} --shell /bin/false nexus
+
+RUN mkdir -p /opt/sonatype \
+  && cd /opt/sonatype \
+  && wget https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz \
+  && tar xzf nexus-${NEXUS_VERSION}-unix.tar.gz \
+  && mv ${NEXUS_ARCHIVE_DIR} nexus \
+  && chown -R nexus /opt/sonatype
+
+
+VOLUME ${SONATYPE_WORK}
+
+EXPOSE 8081
+WORKDIR /opt/sonatype/nexus
+USER nexus
+#ENV CONTEXT_PATH /
+#ENV MAX_HEAP 768m
+#ENV MIN_HEAP 256m
+#ENV JAVA_OPTS -server -XX:MaxPermSize=192m -Djava.net.preferIPv4Stack=true
+#ENV LAUNCHER_CONF ./conf/jetty.xml ./conf/jetty-requestlog.xml
+
+#CMD java \
+#  -Dnexus-work=${SONATYPE_WORK} -Dnexus-webapp-context-path=${CONTEXT_PATH} \
+#  -Xms${MIN_HEAP} -Xmx${MAX_HEAP} \
+#  -cp 'conf/:lib/*' \
+#  ${JAVA_OPTS} \
+#  org.sonatype.nexus.bootstrap.Launcher ${LAUNCHER_CONF}
+
+CMD bin/nexus run
+
